@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+    <defs>
+        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0F172A" />
+            <stop offset="100%" stop-color="#1E293B" />
+        </linearGradient>
+        <linearGradient id="vaultGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#818CF8" />
+            <stop offset="50%" stop-color="#C084FC" />
+            <stop offset="100%" stop-color="#FB7185" />
+        </linearGradient>
+        <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#34D399" />
+            <stop offset="100%" stop-color="#60A5FA" />
+        </linearGradient>
+    </defs>
+    <!-- Background rounded rect -->
+    <rect width="24" height="24" rx="6" fill="url(#bgGrad)" />
+    <!-- Safe Box -->
+    <rect x="5.5" y="6.5" width="13" height="11" rx="2.5" stroke="url(#vaultGrad)" stroke-width="1.8" />
+    <!-- Dial -->
+    <circle cx="12" cy="12" r="2.8" stroke="url(#dialGrad)" stroke-width="1.5" />
+    <circle cx="12" cy="12" r="1" fill="url(#vaultGrad)" />
+    <path d="M12 7.8v0.7M12 15.5v0.7M7.8 12h0.7M15.5 12h0.7" stroke="url(#dialGrad)" stroke-width="1" stroke-linecap="round" />
+</svg>

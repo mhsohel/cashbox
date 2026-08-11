@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.max-w-7xl {
+    max-width: 1500px !important;
+}
+
+/* Small, premium padding for content area of the whole app */
+.px-4.sm\:px-6.lg\:px-8 {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+@media (min-width: 768px) {
+    .px-4.sm\:px-6.lg\:px-8 {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+    }
+}
+
+/* Elegant card shapes and interactive hover states for reports & dashboard grids */
+.bg-white.dark\:bg-slate-900.rounded-2xl,
+.bg-white.dark\:bg-slate-900.rounded-3xl {
+    border-radius: 20px !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.05), 0 2px 8px -1px rgba(148, 163, 184, 0.03) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .bg-white.dark\:bg-slate-900.rounded-2xl,
+.dark .bg-white.dark\:bg-slate-900.rounded-3xl {
+    border: 1px solid rgba(30, 41, 59, 0.6) !important;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25), 0 2px 8px -1px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Interactive lift on hover */
+.bg-white.dark\:bg-slate-900.rounded-2xl:hover,
+.bg-white.dark\:bg-slate-900.rounded-3xl:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.08), 0 8px 16px -6px rgba(148, 163, 184, 0.06) !important;
+}
+
+.dark .bg-white.dark\:bg-slate-900.rounded-2xl:hover,
+.dark .bg-white.dark\:bg-slate-900.rounded-3xl:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.25) !important;
+}

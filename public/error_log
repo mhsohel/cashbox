@@ -1,0 +1,7 @@
+[17-Jun-2026 16:24:12 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.4.1". You are running 7.4.33. in /home/prantikp/cashboxbd.com/vendor/composer/platform_check.php:22
+Stack trace:
+#0 /home/prantikp/cashboxbd.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/prantikp/cashboxbd.com/vendor/autoload.php(22): ComposerAutoloaderInit36793882908b6cbdd344b5a4840231db::getLoader()
+#2 /home/prantikp/cashboxbd.com/public/index.php(14): require('/home/prantikp/...')
+#3 {main}
+  thrown in /home/prantikp/cashboxbd.com/vendor/composer/platform_check.php on line 22
