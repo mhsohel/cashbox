@@ -196,12 +196,13 @@ class ReportController extends Controller
 
         $startingNetWorth = $accounts->sum('current_balance');
 
-        // 2. Calculate average monthly income/expense (last 3 months, excluding SaaS and Loan specific transactions)
+        // 2. Calculate average monthly income/expense (last 3 months, excluding SaaS, Loans, and Transfers)
         $todayEnd = Carbon::now()->endOfMonth();
         $threeMonthsAgo = Carbon::now()->subMonths(2)->startOfMonth();
 
         $standardIncome = $user->transactions()
             ->where('type', 'income')
+            ->where('is_transfer', false)
             ->whereNull('loan_id')
             ->whereNull('license_id')
             ->whereBetween('transaction_date', [$threeMonthsAgo, $todayEnd])
@@ -209,6 +210,7 @@ class ReportController extends Controller
 
         $standardExpense = $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
             ->whereNull('loan_id')
             ->whereNull('license_id')
             ->whereBetween('transaction_date', [$threeMonthsAgo, $todayEnd])
@@ -216,6 +218,24 @@ class ReportController extends Controller
 
         $avgIncome = round($standardIncome / 3, 2);
         $avgExpense = round($standardExpense / 3, 2);
+
+        // 2b. Calculate average spending breakdown by occurrence type
+        $occurrenceSpend = $user->transactions()
+            ->selectRaw('coalesce(categories.expense_occurrence, \'daily\') as occurrence, sum(transactions.amount) as total')
+            ->where('transactions.type', 'expense')
+            ->where('is_transfer', false)
+            ->whereNull('loan_id')
+            ->whereNull('license_id')
+            ->whereBetween('transaction_date', [$threeMonthsAgo, $todayEnd])
+            ->leftJoin('categories', 'transactions.category_id', '=', 'categories.id')
+            ->groupBy('occurrence')
+            ->get()
+            ->pluck('total', 'occurrence')
+            ->toArray();
+
+        $avgDailySpend = round(($occurrenceSpend['daily'] ?? 0) / 3, 2);
+        $avgWeeklySpend = round(($occurrenceSpend['weekly_one_time'] ?? 0) / 3, 2);
+        $avgMonthlySpend = round(($occurrenceSpend['one_time'] ?? 0) / 3, 2);
 
         // 3. Load active SaaS licenses
         $licenses = $user->licenses()
@@ -256,6 +276,7 @@ class ReportController extends Controller
 
                 $threeMonthTotal = $category->transactions()
                     ->where('type', $category->type)
+                    ->where('is_transfer', false)
                     ->whereBetween('transaction_date', [$threeMonthsAgo, $todayEnd])
                     ->sum('amount');
 
@@ -266,6 +287,7 @@ class ReportController extends Controller
                     'color' => $category->color ?? '#3B82F6',
                     'limit' => (float) $budget->amount,
                     'avg_spend' => round($threeMonthTotal / 3, 2),
+                    'expense_occurrence' => $category->expense_occurrence ?? 'daily',
                 ];
             })
             ->filter()
@@ -290,6 +312,11 @@ class ReportController extends Controller
             'averages' => [
                 'income' => (float) $avgIncome,
                 'expense' => (float) $avgExpense,
+            ],
+            'occurrence_averages' => [
+                'daily' => (float) $avgDailySpend,
+                'weekly_one_time' => (float) $avgWeeklySpend,
+                'one_time' => (float) $avgMonthlySpend,
             ],
             'licenses' => $licenses,
             'loans' => $loans,

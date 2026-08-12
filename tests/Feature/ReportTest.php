@@ -100,3 +100,113 @@ test('authenticated standard users load dashboard with daily summary stats prop'
     expect($inertiaData['daily_summary'])->toHaveKey('actual');
     expect($inertiaData['daily_summary'])->toHaveKey('cumulative_savings');
 });
+
+test('authenticated users can load forecast reports page with transfer exclusions and occurrence averages', function () {
+    $user = User::factory()->create();
+
+    // Create Account
+    $account1 = \App\Models\Account::create([
+        'user_id' => $user->id,
+        'name' => 'Wallet 1',
+        'type' => 'cash',
+        'color' => '#6366f1',
+        'initial_balance' => 5000,
+    ]);
+    $account2 = \App\Models\Account::create([
+        'user_id' => $user->id,
+        'name' => 'Wallet 2',
+        'type' => 'cash',
+        'color' => '#10b981',
+        'initial_balance' => 2000,
+    ]);
+
+    // Create Daily category
+    $dailyCat = Category::create([
+        'user_id' => $user->id,
+        'name' => 'Food',
+        'type' => 'expense',
+        'color' => '#EF4444',
+        'expense_occurrence' => 'daily',
+    ]);
+
+    // Create Weekly category
+    $weeklyCat = Category::create([
+        'user_id' => $user->id,
+        'name' => 'Groceries',
+        'type' => 'expense',
+        'color' => '#8B5CF6',
+        'expense_occurrence' => 'weekly_one_time',
+    ]);
+
+    // Create budget
+    $user->budgets()->create([
+        'category_id' => $dailyCat->id,
+        'amount' => 500.00,
+    ]);
+
+    // Create transaction in last 3 months
+    $txnDate = Carbon::now()->subMonth()->format('Y-m-d');
+    
+    // Normal expense
+    Transaction::create([
+        'user_id' => $user->id,
+        'account_id' => $account1->id,
+        'category_id' => $dailyCat->id,
+        'amount' => 300.00,
+        'type' => 'expense',
+        'transaction_date' => $txnDate,
+        'is_transfer' => false,
+    ]);
+
+    // Weekly expense
+    Transaction::create([
+        'user_id' => $user->id,
+        'account_id' => $account1->id,
+        'category_id' => $weeklyCat->id,
+        'amount' => 150.00,
+        'type' => 'expense',
+        'transaction_date' => $txnDate,
+        'is_transfer' => false,
+    ]);
+
+    // Balance transfer transaction (Should be fully excluded from standard averages)
+    $transferSource = Transaction::create([
+        'user_id' => $user->id,
+        'account_id' => $account1->id,
+        'amount' => 1000.00,
+        'type' => 'expense',
+        'transaction_date' => $txnDate,
+        'is_transfer' => true,
+    ]);
+
+    $transferDest = Transaction::create([
+        'user_id' => $user->id,
+        'account_id' => $account2->id,
+        'amount' => 1000.00,
+        'type' => 'income',
+        'transaction_date' => $txnDate,
+        'is_transfer' => true,
+        'transfer_transaction_id' => $transferSource->id,
+    ]);
+    $transferSource->update(['transfer_transaction_id' => $transferDest->id]);
+
+    $response = $this->actingAs($user)->get('/reports/forecast');
+
+    $response->assertStatus(200);
+
+    $inertiaData = $response->original->getData()['page']['props'];
+
+    // Verify balance transfers are excluded from standard averages:
+    // Only standard expenses = 300 (daily) + 150 (weekly) = 450. Over 3 months = 150 average
+    expect((float)$inertiaData['averages']['expense'])->toBe(150.0);
+
+    // Verify occurrence_averages:
+    // Daily: 300/3 = 100. Weekly: 150/3 = 50. Monthly/One-time: 0
+    expect((float)$inertiaData['occurrence_averages']['daily'])->toBe(100.0);
+    expect((float)$inertiaData['occurrence_averages']['weekly_one_time'])->toBe(50.0);
+    expect((float)$inertiaData['occurrence_averages']['one_time'])->toBe(0.0);
+
+    // Verify budgets list has occurrence details
+    expect($inertiaData['budgets'])->toHaveCount(1);
+    expect($inertiaData['budgets'][0]['expense_occurrence'])->toBe('daily');
+});

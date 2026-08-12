@@ -16,6 +16,10 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    occurrence_averages: {
+        type: Object,
+        required: true,
+    },
     licenses: {
         type: Array,
         required: true,
@@ -422,12 +426,43 @@ const healthScoreColor = computed(() => {
                             <!-- Financial Score Card -->
                             <div class="p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/30">
                                 <div>
-                                    <p class="text-xs font-bold uppercase tracking-wider text-slate-600">Runway Health Score</p>
+                                    <p class="text-xs font-bold uppercase tracking-wider text-slate-655 dark:text-slate-455">Runway Health Score</p>
                                     <p class="text-[10px] text-slate-600 leading-normal mt-0.5 max-w-[160px]">Overall safety rating based on cash buffer & savings.</p>
                                 </div>
                                 <div class="w-14 h-14 rounded-full flex flex-col items-center justify-center font-extrabold text-lg shadow-sm border border-slate-100 dark:border-slate-750" :class="healthScoreColor">
                                     <span>{{ financialHealthScore }}</span>
                                     <span class="text-[8px] tracking-tight uppercase opacity-80 -mt-1">/100</span>
+                                </div>
+                            </div>
+
+                            <!-- Spending Breakdown Card -->
+                            <div class="p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 space-y-3">
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-wider text-slate-655 dark:text-slate-455">3-Month Outflow Breakdown</p>
+                                    <p class="text-[10px] text-slate-600 dark:text-slate-500 leading-normal mt-0.5">Average monthly spend across category occurrence types.</p>
+                                </div>
+                                <div class="space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                    <div class="flex justify-between items-center p-2 rounded bg-white dark:bg-slate-900 border border-slate-100/50 dark:border-slate-850/50">
+                                        <span class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                                            Daily Variable:
+                                        </span>
+                                        <span class="font-extrabold text-slate-855 dark:text-white">{{ formatCurrency(occurrence_averages.daily) }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 rounded bg-white dark:bg-slate-900 border border-slate-100/50 dark:border-slate-850/50">
+                                        <span class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                                            Weekly One-time:
+                                        </span>
+                                        <span class="font-extrabold text-slate-855 dark:text-white">{{ formatCurrency(occurrence_averages.weekly_one_time) }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 rounded bg-white dark:bg-slate-900 border border-slate-100/50 dark:border-slate-850/50">
+                                        <span class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                                            Monthly One-time:
+                                        </span>
+                                        <span class="font-extrabold text-slate-855 dark:text-white">{{ formatCurrency(occurrence_averages.one_time) }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -794,6 +829,16 @@ const healthScoreColor = computed(() => {
                                             <span class="flex items-center gap-2 text-xs font-bold">
                                                 <span class="w-2.5 h-2.5 rounded-full inline-block" :style="{ backgroundColor: b.color }"></span>
                                                 {{ b.category_name }}
+                                                <span 
+                                                    class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400"
+                                                    :class="[
+                                                        b.expense_occurrence === 'daily' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : '',
+                                                        b.expense_occurrence === 'weekly_one_time' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400' : '',
+                                                        b.expense_occurrence === 'one_time' ? 'bg-amber-50 dark:bg-amber-955/20 text-amber-600 dark:text-amber-400' : '',
+                                                    ]"
+                                                >
+                                                    {{ b.expense_occurrence === 'daily' ? 'Daily' : b.expense_occurrence === 'weekly_one_time' ? 'Weekly' : 'One-time' }}
+                                                </span>
                                             </span>
                                             <span 
                                                 class="px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase"
