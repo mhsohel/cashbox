@@ -52,16 +52,16 @@ class RegisteredUserController extends Controller
 
         // Seed basic categories of income and expenses
         $defaultCategories = [
-            ['name' => 'Salary', 'type' => 'income', 'color' => '#10b981'],
-            ['name' => 'Freelance', 'type' => 'income', 'color' => '#3b82f6'],
-            ['name' => 'Investments', 'type' => 'income', 'color' => '#8b5cf6'],
-            ['name' => 'Other Income', 'type' => 'income', 'color' => '#f59e0b'],
-            ['name' => 'Food & Dining', 'type' => 'expense', 'color' => '#ef4444'],
-            ['name' => 'Rent & Utilities', 'type' => 'expense', 'color' => '#f97316'],
-            ['name' => 'Transportation', 'type' => 'expense', 'color' => '#ec4899'],
-            ['name' => 'Entertainment', 'type' => 'expense', 'color' => '#a855f7'],
-            ['name' => 'Shopping', 'type' => 'expense', 'color' => '#06b6d4'],
-            ['name' => 'Medical', 'type' => 'expense', 'color' => '#14b8a6'],
+            ['name' => 'Salary', 'type' => 'income', 'color' => '#10b981', 'expense_occurrence' => 'daily'],
+            ['name' => 'Freelance', 'type' => 'income', 'color' => '#3b82f6', 'expense_occurrence' => 'daily'],
+            ['name' => 'Investments', 'type' => 'income', 'color' => '#8b5cf6', 'expense_occurrence' => 'daily'],
+            ['name' => 'Other Income', 'type' => 'income', 'color' => '#f59e0b', 'expense_occurrence' => 'daily'],
+            ['name' => 'Food & Dining', 'type' => 'expense', 'color' => '#ef4444', 'expense_occurrence' => 'daily'],
+            ['name' => 'Rent & Utilities', 'type' => 'expense', 'color' => '#f97316', 'expense_occurrence' => 'one_time'],
+            ['name' => 'Transportation', 'type' => 'expense', 'color' => '#ec4899', 'expense_occurrence' => 'daily'],
+            ['name' => 'Entertainment', 'type' => 'expense', 'color' => '#a855f7', 'expense_occurrence' => 'daily'],
+            ['name' => 'Shopping', 'type' => 'expense', 'color' => '#06b6d4', 'expense_occurrence' => 'daily'],
+            ['name' => 'Medical', 'type' => 'expense', 'color' => '#14b8a6', 'expense_occurrence' => 'daily'],
         ];
 
         foreach ($defaultCategories as $categoryData) {

@@ -24,6 +24,7 @@ class CategoryController extends Controller
                     'name' => $category->name,
                     'type' => $category->type,
                     'color' => $category->color ?? '#3B82F6',
+                    'expense_occurrence' => $category->expense_occurrence ?? 'daily',
                     'transactions_count' => $category->transactions_count,
                     'budgets_count' => $category->budgets_count,
                 ];
@@ -35,7 +36,13 @@ class CategoryController extends Controller
     }
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
-        Auth::user()->categories()->create($request->validated());
+        $data = $request->validated();
+        if ($data['type'] === 'expense' && empty($data['expense_occurrence'])) {
+            $data['expense_occurrence'] = 'daily';
+        } elseif ($data['type'] === 'income') {
+            $data['expense_occurrence'] = 'daily';
+        }
+        Auth::user()->categories()->create($data);
 
         return redirect()->back();
     }
@@ -46,7 +53,13 @@ class CategoryController extends Controller
             abort(403);
         }
 
-        $category->update($request->validated());
+        $data = $request->validated();
+        if ($data['type'] === 'expense' && empty($data['expense_occurrence'])) {
+            $data['expense_occurrence'] = 'daily';
+        } elseif ($data['type'] === 'income') {
+            $data['expense_occurrence'] = 'daily';
+        }
+        $category->update($data);
 
         return redirect()->back();
     }

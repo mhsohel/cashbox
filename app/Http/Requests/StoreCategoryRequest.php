@@ -26,6 +26,7 @@ class StoreCategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', 'in:income,expense'],
             'color' => ['nullable', 'string', 'max:50'],
+            'expense_occurrence' => ['nullable', 'string', 'in:daily,weekly_one_time,one_time'],
         ];
     }
 }

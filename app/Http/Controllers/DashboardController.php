@@ -193,7 +193,8 @@ class DashboardController extends Controller
         // 1. Expense budget: perpetual (month is null)
         $expenseBudgetTotal = (float) $user->budgets()
             ->whereHas('category', function ($q) {
-                $q->where('type', 'expense');
+                $q->where('type', 'expense')
+                  ->where('expense_occurrence', 'daily');
             })
             ->whereNull('month')
             ->sum('amount');
@@ -201,32 +202,41 @@ class DashboardController extends Controller
         // Apportion to daily share
         $dailyShare = $daysInMonth > 0 ? round($expenseBudgetTotal / $daysInMonth, 2) : 0.0;
 
-        // Calculate carryover surplus/deficit from past days of this month
-        $carryOver = 0.0;
+        // Calculate cumulative actual spent from past days of this month
+        $actualExpensePast = 0.0;
         if ($dayOfMonth > 1) {
             $startOfMonth = $today->copy()->startOfMonth();
             $yesterdayEnd = $today->copy()->subDay()->endOfDay();
-            
-            $pastDaysCount = $dayOfMonth - 1;
-            $pastBudgetAllocation = round($dailyShare * $pastDaysCount, 2);
 
             $actualExpensePast = (float) $user->transactions()
                 ->where('type', 'expense')
+                ->where('is_transfer', false)
+                ->where(function ($query) {
+                    $query->whereHas('category', function ($q) {
+                        $q->where('expense_occurrence', 'daily');
+                    })->orWhereNull('category_id');
+                })
                 ->whereBetween('transaction_date', [$startOfMonth, $yesterdayEnd])
                 ->sum('amount');
-
-            $carryOver = round($pastBudgetAllocation - $actualExpensePast, 2);
         }
 
-        // Today's cumulative budget = daily share + carryover (capped at daily share)
-        $dailyExpenseBudget = round($dailyShare + $carryOver, 2);
-        if ($dailyExpenseBudget > $dailyShare) {
-            $dailyExpenseBudget = $dailyShare;
+        // Today's budget = Monthly Daily-Expense Remaining / remaining day count
+        $remainingDays = $daysInMonth - $dayOfMonth + 1;
+        $monthlyRemainingBeforeToday = $expenseBudgetTotal - $actualExpensePast;
+        $dailyExpenseBudget = $remainingDays > 0 ? round($monthlyRemainingBeforeToday / $remainingDays, 2) : 0.0;
+        if ($dailyExpenseBudget < 0) {
+            $dailyExpenseBudget = 0.0;
         }
 
         // Fetch actuals for today
         $actualExpenseToday = (float) $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
+            ->where(function ($query) {
+                $query->whereHas('category', function ($q) {
+                    $q->where('expense_occurrence', 'daily');
+                })->orWhereNull('category_id');
+            })
             ->whereDate('transaction_date', $dateStr)
             ->sum('amount');
 
@@ -238,6 +248,12 @@ class DashboardController extends Controller
         
         $actualExpenseCumulative = (float) $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
+            ->where(function ($query) {
+                $query->whereHas('category', function ($q) {
+                    $q->where('expense_occurrence', 'daily');
+                })->orWhereNull('category_id');
+            })
             ->whereBetween('transaction_date', [$startOfMonth, $todayEnd])
             ->sum('amount');
 

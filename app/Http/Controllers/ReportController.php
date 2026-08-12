@@ -684,7 +684,8 @@ class ReportController extends Controller
         // 1. Expense budget: perpetual (month is null)
         $expenseBudgetTotal = (float) $user->budgets()
             ->whereHas('category', function ($q) {
-                $q->where('type', 'expense');
+                $q->where('type', 'expense')
+                  ->where('expense_occurrence', 'daily');
             })
             ->whereNull('month')
             ->sum('amount');
@@ -692,32 +693,41 @@ class ReportController extends Controller
         // Apportion to daily share
         $dailyShare = $daysInMonth > 0 ? round($expenseBudgetTotal / $daysInMonth, 2) : 0.0;
 
-        // Calculate carryover surplus/deficit from past days of this month
-        $carryOver = 0.0;
+        // Calculate cumulative actual spent from past days of this month
+        $actualExpensePast = 0.0;
         if ($dayOfMonth > 1) {
             $startOfMonth = $today->copy()->startOfMonth();
             $yesterdayEnd = $today->copy()->subDay()->endOfDay();
-            
-            $pastDaysCount = $dayOfMonth - 1;
-            $pastBudgetAllocation = round($dailyShare * $pastDaysCount, 2);
 
             $actualExpensePast = (float) $user->transactions()
                 ->where('type', 'expense')
+                ->where('is_transfer', false)
+                ->where(function ($query) {
+                    $query->whereHas('category', function ($q) {
+                        $q->where('expense_occurrence', 'daily');
+                    })->orWhereNull('category_id');
+                })
                 ->whereBetween('transaction_date', [$startOfMonth, $yesterdayEnd])
                 ->sum('amount');
-
-            $carryOver = round($pastBudgetAllocation - $actualExpensePast, 2);
         }
 
-        // Today's cumulative budget = daily share + carryover (capped at daily share)
-        $dailyExpenseBudget = round($dailyShare + $carryOver, 2);
-        if ($dailyExpenseBudget > $dailyShare) {
-            $dailyExpenseBudget = $dailyShare;
+        // Today's budget = Monthly Daily-Expense Remaining / remaining day count
+        $remainingDays = $daysInMonth - $dayOfMonth + 1;
+        $monthlyRemainingBeforeToday = $expenseBudgetTotal - $actualExpensePast;
+        $dailyExpenseBudget = $remainingDays > 0 ? round($monthlyRemainingBeforeToday / $remainingDays, 2) : 0.0;
+        if ($dailyExpenseBudget < 0) {
+            $dailyExpenseBudget = 0.0;
         }
 
         // Fetch actuals for today
         $actualExpenseToday = (float) $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
+            ->where(function ($query) {
+                $query->whereHas('category', function ($q) {
+                    $q->where('expense_occurrence', 'daily');
+                })->orWhereNull('category_id');
+            })
             ->whereDate('transaction_date', $dateStr)
             ->sum('amount');
 
@@ -729,6 +739,12 @@ class ReportController extends Controller
         
         $actualExpenseCumulative = (float) $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
+            ->where(function ($query) {
+                $query->whereHas('category', function ($q) {
+                    $q->where('expense_occurrence', 'daily');
+                })->orWhereNull('category_id');
+            })
             ->whereBetween('transaction_date', [$startOfMonth, $todayEnd])
             ->sum('amount');
 
@@ -788,7 +804,8 @@ class ReportController extends Controller
         // 1. Expense budget: perpetual (month is null)
         $expenseBudgetTotal = (float) $user->budgets()
             ->whereHas('category', function ($q) {
-                $q->where('type', 'expense');
+                $q->where('type', 'expense')
+                  ->where('expense_occurrence', 'daily');
             })
             ->whereNull('month')
             ->sum('amount');
@@ -796,32 +813,41 @@ class ReportController extends Controller
         // Apportion to daily share
         $dailyShare = $daysInMonth > 0 ? round($expenseBudgetTotal / $daysInMonth, 2) : 0.0;
 
-        // Calculate carryover surplus/deficit from past days of this month
-        $carryOver = 0.0;
+        // Calculate cumulative actual spent from past days of this month
+        $actualExpensePast = 0.0;
         if ($dayOfMonth > 1) {
             $startOfMonth = $date->copy()->startOfMonth();
             $yesterdayEnd = $date->copy()->subDay()->endOfDay();
-            
-            $pastDaysCount = $dayOfMonth - 1;
-            $pastBudgetAllocation = round($dailyShare * $pastDaysCount, 2);
 
             $actualExpensePast = (float) $user->transactions()
                 ->where('type', 'expense')
+                ->where('is_transfer', false)
+                ->where(function ($query) {
+                    $query->whereHas('category', function ($q) {
+                        $q->where('expense_occurrence', 'daily');
+                    })->orWhereNull('category_id');
+                })
                 ->whereBetween('transaction_date', [$startOfMonth, $yesterdayEnd])
                 ->sum('amount');
-
-            $carryOver = round($pastBudgetAllocation - $actualExpensePast, 2);
         }
 
-        // Today's cumulative budget = daily share + carryover (capped at daily share)
-        $dailyExpenseBudget = round($dailyShare + $carryOver, 2);
-        if ($dailyExpenseBudget > $dailyShare) {
-            $dailyExpenseBudget = $dailyShare;
+        // Today's budget = Monthly Daily-Expense Remaining / remaining day count
+        $remainingDays = $daysInMonth - $dayOfMonth + 1;
+        $monthlyRemainingBeforeToday = $expenseBudgetTotal - $actualExpensePast;
+        $dailyExpenseBudget = $remainingDays > 0 ? round($monthlyRemainingBeforeToday / $remainingDays, 2) : 0.0;
+        if ($dailyExpenseBudget < 0) {
+            $dailyExpenseBudget = 0.0;
         }
 
         // Fetch actuals for that specific date
         $actualExpense = (float) $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
+            ->where(function ($query) {
+                $query->whereHas('category', function ($q) {
+                    $q->where('expense_occurrence', 'daily');
+                })->orWhereNull('category_id');
+            })
             ->whereDate('transaction_date', $dateStr)
             ->sum('amount');
 
@@ -835,15 +861,27 @@ class ReportController extends Controller
         
         $actualExpenseCumulative = (float) $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
+            ->where(function ($query) {
+                $query->whereHas('category', function ($q) {
+                    $q->where('expense_occurrence', 'daily');
+                })->orWhereNull('category_id');
+            })
             ->whereBetween('transaction_date', [$startOfMonth, $todayEnd])
             ->sum('amount');
 
         $cumulativeSavings = round($cumulativeBudget - $actualExpenseCumulative, 2);
 
-        // Fetch transactions list for that day (expenses only)
+        // Fetch transactions list for that day (expenses only, excluding one-time monthly expenses and transfers)
         $transactions = $user->transactions()
             ->with(['category', 'account'])
             ->where('type', 'expense')
+            ->where('is_transfer', false)
+            ->where(function ($query) {
+                $query->whereHas('category', function ($q) {
+                    $q->where('expense_occurrence', 'daily');
+                })->orWhereNull('category_id');
+            })
             ->whereDate('transaction_date', $dateStr)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -857,6 +895,49 @@ class ReportController extends Controller
                     'category_color' => $t->category?->color ?? '#94A3B8',
                     'account_name' => $t->account?->name ?? 'Unknown',
                     'transaction_date' => $t->transaction_date,
+                    'expense_occurrence' => $t->category?->expense_occurrence ?? 'daily',
+                ];
+            });
+
+        $dailyCategories = $user->categories()
+            ->where('type', 'expense')
+            ->where('expense_occurrence', 'daily')
+            ->pluck('name')
+            ->toArray();
+
+        $weeklyCategories = $user->categories()
+            ->where('type', 'expense')
+            ->where('expense_occurrence', 'weekly_one_time')
+            ->pluck('name')
+            ->toArray();
+
+        $oneTimeCategories = $user->categories()
+            ->where('type', 'expense')
+            ->where('expense_occurrence', 'one_time')
+            ->pluck('name')
+            ->toArray();
+
+        $dailyCategorySummary = $user->categories()
+            ->where('type', 'expense')
+            ->where('expense_occurrence', 'daily')
+            ->get()
+            ->map(function ($category) use ($startOfMonth, $todayEnd) {
+                $budget = $category->budgets()->whereNull('month')->first();
+                $limit = $budget ? (float) $budget->amount : 0.0;
+
+                $spent = (float) $category->transactions()
+                    ->where('type', 'expense')
+                    ->where('is_transfer', false)
+                    ->whereBetween('transaction_date', [$startOfMonth, $todayEnd])
+                    ->sum('amount');
+
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'color' => $category->color ?? '#3B82F6',
+                    'budget' => $limit,
+                    'spent' => $spent,
+                    'remaining' => round($limit - $spent, 2),
                 ];
             });
 
@@ -871,6 +952,15 @@ class ReportController extends Controller
             'surplus' => $surplus,
             'cumulative_savings' => $cumulativeSavings,
             'transactions' => $transactions,
+            'daily_categories' => $dailyCategories,
+            'weekly_categories' => $weeklyCategories,
+            'one_time_categories' => $oneTimeCategories,
+            'monthly_daily_summary' => [
+                'budget' => $expenseBudgetTotal,
+                'actual' => $actualExpenseCumulative,
+                'remaining' => round($expenseBudgetTotal - $actualExpenseCumulative, 2),
+            ],
+            'daily_category_summary' => $dailyCategorySummary,
         ]);
     }
 }

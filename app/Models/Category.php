@@ -13,6 +13,7 @@ class Category extends Model
         'name',
         'type',
         'color',
+        'expense_occurrence',
     ];
 
     public function user(): BelongsTo

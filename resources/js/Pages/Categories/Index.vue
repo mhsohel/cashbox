@@ -17,6 +17,7 @@ const categoryForm = useForm({
     name: '',
     type: 'expense',
     color: '#3B82F6',
+    expense_occurrence: 'daily',
 });
 
 // Computations
@@ -38,6 +39,7 @@ const openAddCategory = () => {
     categoryForm.reset();
     categoryForm.type = activeTab.value;
     categoryForm.color = '#3B82F6';
+    categoryForm.expense_occurrence = 'daily';
     categoryForm.clearErrors();
     showCategoryModal.value = true;
 };
@@ -48,6 +50,7 @@ const openEditCategory = (cat) => {
     categoryForm.name = cat.name;
     categoryForm.type = cat.type;
     categoryForm.color = cat.color || '#3B82F6';
+    categoryForm.expense_occurrence = cat.expense_occurrence || 'daily';
     categoryForm.clearErrors();
     showCategoryModal.value = true;
 };
@@ -197,14 +200,31 @@ const colors = [
                             </div>
 
                             <!-- Meta info: type badge -->
-                            <span 
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                                :class="cat.type === 'expense' 
-                                    ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400' 
-                                    : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400'"
-                            >
-                                {{ cat.type }}
-                            </span>
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                <span 
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                                    :class="cat.type === 'expense' 
+                                        ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400' 
+                                        : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400'"
+                                >
+                                    {{ cat.type }}
+                                </span>
+                                <span 
+                                    v-if="cat.type === 'expense'"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                                    :class="{
+                                        'bg-blue-50 text-blue-600 dark:bg-blue-955/20 dark:text-blue-400': cat.expense_occurrence === 'daily',
+                                        'bg-purple-50 text-purple-650 dark:bg-purple-955/20 dark:text-purple-400': cat.expense_occurrence === 'weekly_one_time',
+                                        'bg-amber-50 text-amber-600 dark:bg-amber-955/20 dark:text-amber-400': cat.expense_occurrence === 'one_time',
+                                    }"
+                                >
+                                    {{ 
+                                        cat.expense_occurrence === 'one_time' ? 'Monthly One-time' 
+                                        : cat.expense_occurrence === 'weekly_one_time' ? 'Weekly One-time' 
+                                        : 'Daily' 
+                                    }}
+                                </span>
+                            </div>
                         </div>
 
                         <!-- Counters linked to transaction / budget items -->
@@ -270,6 +290,21 @@ const colors = [
                             <option value="income">Income Category</option>
                         </select>
                         <p v-if="categoryForm.errors.type" class="text-xs text-rose-500 mt-1 font-semibold">{{ categoryForm.errors.type }}</p>
+                    </div>
+
+                    <div v-if="categoryForm.type === 'expense'">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            Expense Classification
+                        </label>
+                        <select 
+                            v-model="categoryForm.expense_occurrence"
+                            class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-2 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+                        >
+                            <option value="daily">Daily Variable Expense (e.g. food, transport)</option>
+                            <option value="weekly_one_time">Weekly One-Time Expense (e.g. groceries, weekly sub)</option>
+                            <option value="one_time">Monthly One-Time Expense (e.g. rent, bills)</option>
+                        </select>
+                        <p v-if="categoryForm.errors.expense_occurrence" class="text-xs text-rose-500 mt-1 font-semibold">{{ categoryForm.errors.expense_occurrence }}</p>
                     </div>
 
                     <div>
