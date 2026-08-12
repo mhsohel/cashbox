@@ -16,7 +16,7 @@ class ReportController extends Controller
     {
         $user = Auth::user();
 
-        // 1. Calculate Historical Trends (Last 6 Months)
+        // 1. Calculate Historical Trends (Last 6 Months, excluding Transfers)
         $trends = [];
         
         for ($i = 5; $i >= 0; $i--) {
@@ -29,11 +29,13 @@ class ReportController extends Controller
             
             $income = $user->transactions()
                 ->where('type', 'income')
+                ->where('is_transfer', false)
                 ->whereBetween('transaction_date', [$startDate, $endDate])
                 ->sum('amount');
                 
             $expense = $user->transactions()
                 ->where('type', 'expense')
+                ->where('is_transfer', false)
                 ->whereBetween('transaction_date', [$startDate, $endDate])
                 ->sum('amount');
 
@@ -50,7 +52,7 @@ class ReportController extends Controller
             ];
         }
 
-        // 2. Calculate Category Breakdown (Last 6 Months aggregated)
+        // 2. Calculate Category Breakdown (Last 6 Months aggregated, excluding Transfers)
         $sixMonthsAgo = Carbon::now()->subMonths(5)->startOfMonth();
         $todayEnd = Carbon::now()->endOfMonth();
 
@@ -60,6 +62,7 @@ class ReportController extends Controller
             ->map(function (Category $category) use ($sixMonthsAgo, $todayEnd) {
                 $totalSpent = $category->transactions()
                     ->where('type', 'expense')
+                    ->where('is_transfer', false)
                     ->whereBetween('transaction_date', [$sixMonthsAgo, $todayEnd])
                     ->sum('amount');
 
@@ -73,16 +76,18 @@ class ReportController extends Controller
             ->filter(fn($cat) => $cat['total'] > 0)
             ->values();
 
-        // 3. Projections based on Last 3 Months average
+        // 3. Projections based on Last 3 Months average (excluding Transfers)
         $threeMonthsAgo = Carbon::now()->subMonths(2)->startOfMonth();
         
         $totalIncomeLast3 = $user->transactions()
             ->where('type', 'income')
+            ->where('is_transfer', false)
             ->whereBetween('transaction_date', [$threeMonthsAgo, $todayEnd])
             ->sum('amount');
 
         $totalExpenseLast3 = $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
             ->whereBetween('transaction_date', [$threeMonthsAgo, $todayEnd])
             ->sum('amount');
 
@@ -127,6 +132,7 @@ class ReportController extends Controller
 
                 $earned = $category->transactions()
                     ->where('type', 'income')
+                    ->where('is_transfer', false)
                     ->whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
                     ->sum('amount');
 

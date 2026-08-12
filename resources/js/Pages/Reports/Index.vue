@@ -48,6 +48,12 @@ const formatCurrency = (value) => {
     return (val < 0 ? '-' : '') + '৳' + formatted;
 };
 
+// Calculate percentage of category expenses
+const roundPct = (val) => {
+    if (!totalCategoryExpenses.value) return 0;
+    return Math.round((val / totalCategoryExpenses.value) * 100);
+};
+
 // SVG Graph Calculations (Income vs Expense)
 const maxAmount = computed(() => {
     const values = props.trends.flatMap(t => [t.income, t.expense]);
@@ -765,14 +771,3 @@ const totalAccountsSummary = computed(() => {
         </div>
     </AuthenticatedLayout>
 </template>
-
-<script>
-export default {
-    methods: {
-        roundPct(val) {
-            if (this.totalCategoryExpenses === 0) return 0;
-            return Math.round((val / this.totalCategoryExpenses) * 100);
-        }
-    }
-}
-</script>

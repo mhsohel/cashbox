@@ -210,3 +210,84 @@ test('authenticated users can load forecast reports page with transfer exclusion
     expect($inertiaData['budgets'])->toHaveCount(1);
     expect($inertiaData['budgets'][0]['expense_occurrence'])->toBe('daily');
 });
+
+test('authenticated users can load reports index page with transfer exclusions', function () {
+    $user = User::factory()->create();
+
+    // Create Account
+    $account1 = \App\Models\Account::create([
+        'user_id' => $user->id,
+        'name' => 'Wallet 1',
+        'type' => 'cash',
+        'color' => '#6366f1',
+        'initial_balance' => 5000,
+    ]);
+    $account2 = \App\Models\Account::create([
+        'user_id' => $user->id,
+        'name' => 'Wallet 2',
+        'type' => 'cash',
+        'color' => '#10b981',
+        'initial_balance' => 2000,
+    ]);
+
+    // Create Category
+    $foodCat = Category::create([
+        'user_id' => $user->id,
+        'name' => 'Food',
+        'type' => 'expense',
+        'color' => '#EF4444',
+    ]);
+
+    // Create normal expense in last 3 months
+    $txnDate = Carbon::now()->subMonth()->format('Y-m-d');
+    
+    Transaction::create([
+        'user_id' => $user->id,
+        'account_id' => $account1->id,
+        'category_id' => $foodCat->id,
+        'amount' => 300.00,
+        'type' => 'expense',
+        'transaction_date' => $txnDate,
+        'is_transfer' => false,
+    ]);
+
+    // Balance transfer transaction (Should be fully excluded from standard averages)
+    $transferSource = Transaction::create([
+        'user_id' => $user->id,
+        'account_id' => $account1->id,
+        'amount' => 1000.00,
+        'type' => 'expense',
+        'transaction_date' => $txnDate,
+        'is_transfer' => true,
+    ]);
+
+    $transferDest = Transaction::create([
+        'user_id' => $user->id,
+        'account_id' => $account2->id,
+        'amount' => 1000.00,
+        'type' => 'income',
+        'transaction_date' => $txnDate,
+        'is_transfer' => true,
+        'transfer_transaction_id' => $transferSource->id,
+    ]);
+    $transferSource->update(['transfer_transaction_id' => $transferDest->id]);
+
+    $response = $this->actingAs($user)->get('/reports');
+
+    $response->assertStatus(200);
+
+    $inertiaData = $response->original->getData()['page']['props'];
+
+    // Verify balance transfers are excluded from standard averages:
+    // Only standard expenses = 300. Over 3 months = 100 average
+    expect((float)$inertiaData['averages']['expense'])->toBe(100.0);
+    expect((float)$inertiaData['averages']['income'])->toBe(0.0);
+
+    // Verify trends:
+    // The previous month has 300 standard expense and 0 standard income.
+    $targetMonth = Carbon::now()->subMonth()->format('Y-m');
+    $trendMatch = collect($inertiaData['trends'])->firstWhere('month_key', $targetMonth);
+    expect($trendMatch)->not->toBeNull();
+    expect((float)$trendMatch['expense'])->toBe(300.0);
+    expect((float)$trendMatch['income'])->toBe(0.0);
+});
