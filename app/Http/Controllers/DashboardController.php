@@ -26,42 +26,48 @@ class DashboardController extends Controller
         $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
         $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
 
-        // 1. Overall Balance (all-time)
+        // 1. Overall Balance (all-time, excluding transfers)
         $totalIncomeAllTime = $user->transactions()
             ->where('type', 'income')
+            ->where('is_transfer', false)
             ->sum('amount');
             
         $totalExpenseAllTime = $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
             ->sum('amount');
             
         $netBalance = $totalIncomeAllTime - $totalExpenseAllTime;
 
-        // 2. Monthly Income
+        // 2. Monthly Income (excluding transfers)
         $monthlyIncome = $user->transactions()
             ->where('type', 'income')
+            ->where('is_transfer', false)
             ->whereBetween('transaction_date', [$startDate, $endDate])
             ->sum('amount');
 
-        // 3. Monthly Expenses
+        // 3. Monthly Expenses (excluding transfers)
         $monthlyExpenses = $user->transactions()
             ->where('type', 'expense')
+            ->where('is_transfer', false)
             ->whereBetween('transaction_date', [$startDate, $endDate])
             ->sum('amount');
 
-        // 4. Categories with budget limit and actual spending for this month
+        // 4. Categories with budget limit and actual spending for this month (excluding transfers)
         $categoriesData = $user->categories()
             ->get()
             ->map(function (Category $category) use ($startDate, $endDate, $month) {
                 // Sum of expenses for this category in the month
                 $spent = $category->transactions()
                     ->where('type', 'expense')
+                    ->where('is_transfer', false)
                     ->whereBetween('transaction_date', [$startDate, $endDate])
                     ->sum('amount');
 
                 // Sum of income for this category in the month
                 $earned = $category->transactions()
                     ->where('type', 'income')
+                    ->where('is_transfer', false)
                     ->whereBetween('transaction_date', [$startDate, $endDate])
                     ->sum('amount');
 
@@ -88,6 +94,7 @@ class DashboardController extends Controller
                     'budget_limit' => $limit,
                     'percentage_used' => $percentage,
                     'deficit' => (float) $deficit,
+                    'expense_occurrence' => $category->expense_occurrence ?? 'daily',
                 ];
             });
 

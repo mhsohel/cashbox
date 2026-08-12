@@ -484,34 +484,47 @@ const resetLedgerFilters = () => {
                     Personal Budget Insights
                 </h2>
                 
-                <!-- Month Selector -->
-                <div class="flex items-center gap-2 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Add Transaction Quick Button -->
                     <button 
-                        @click="prevMonth"
-                        class="p-2 text-slate-600 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-150"
-                        title="Previous Month"
+                        @click="openAddTransaction"
+                        class="px-4 py-2 bg-indigo-600 dark:bg-indigo-650 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-md transition duration-150 flex items-center gap-1.5"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
+                        Add Transaction
                     </button>
-                    
-                    <input 
-                        type="month" 
-                        v-model="selectedMonth" 
-                        @change="handleMonthChange"
-                        class="bg-transparent text-slate-800 dark:text-slate-100 font-semibold border-none focus:ring-0 p-0 text-center text-sm w-32 cursor-pointer"
-                    />
 
-                    <button 
-                        @click="nextMonth"
-                        class="p-2 text-slate-600 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-150"
-                        title="Next Month"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
+                    <!-- Month Selector -->
+                    <div class="flex items-center gap-2 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <button 
+                            @click="prevMonth"
+                            class="p-2 text-slate-600 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-150"
+                            title="Previous Month"
+                        >
+                            <svg xmlns="http://www.w3.org/2050/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        
+                        <input 
+                            type="month" 
+                            v-model="selectedMonth" 
+                            @change="handleMonthChange"
+                            class="bg-transparent text-slate-800 dark:text-slate-100 font-semibold border-none focus:ring-0 p-0 text-center text-sm w-32 cursor-pointer"
+                        />
+
+                        <button 
+                            @click="nextMonth"
+                            class="p-2 text-slate-600 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-150"
+                            title="Next Month"
+                        >
+                            <svg xmlns="http://www.w3.org/2050/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </template>
@@ -855,6 +868,18 @@ const resetLedgerFilters = () => {
                                                     :style="{ backgroundColor: cat.color }"
                                                 ></span>
                                                 <h4 class="font-bold text-slate-800 dark:text-slate-200">{{ cat.name }}</h4>
+                                                
+                                                <!-- Occurrence Badge -->
+                                                <span 
+                                                    class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider"
+                                                    :class="[
+                                                        cat.expense_occurrence === 'daily' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400' : '',
+                                                        cat.expense_occurrence === 'weekly_one_time' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-650 dark:text-purple-400' : '',
+                                                        cat.expense_occurrence === 'one_time' ? 'bg-amber-50 dark:bg-amber-955/20 text-amber-600 dark:text-amber-400' : '',
+                                                    ]"
+                                                >
+                                                    {{ cat.expense_occurrence === 'daily' ? 'Daily' : cat.expense_occurrence === 'weekly_one_time' ? 'Weekly' : 'One-time' }}
+                                                </span>
                                                 
                                                 <!-- Filter Ledger Button -->
                                                 <button 
@@ -1502,6 +1527,17 @@ const resetLedgerFilters = () => {
                                                 : 'bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-950/20 dark:border-rose-900/40 dark:text-rose-400'"
                                         >
                                             {{ cat.type }}
+                                        </span>
+                                        <span 
+                                            v-if="cat.type === 'expense'"
+                                            class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider"
+                                            :class="[
+                                                cat.expense_occurrence === 'daily' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400' : '',
+                                                cat.expense_occurrence === 'weekly_one_time' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-650 dark:text-purple-400' : '',
+                                                cat.expense_occurrence === 'one_time' ? 'bg-amber-50 dark:bg-amber-955/20 text-amber-600 dark:text-amber-400' : '',
+                                            ]"
+                                        >
+                                            {{ cat.expense_occurrence === 'daily' ? 'Daily' : cat.expense_occurrence === 'weekly_one_time' ? 'Weekly' : 'One-time' }}
                                         </span>
                                     </div>
                                     <button 
